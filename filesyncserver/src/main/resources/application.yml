@@ -1,0 +1,44 @@
+# spring:
+#   application:
+#     name: filesyncserver
+#   datasource:
+#     url: jdbc:postgresql://localhost:5432/file_sync
+#     username: myuser
+#     password: '0000'
+#     driver-class-name: org.postgresql.Driver
+#   jpa:
+#     hibernate:
+#       ddl-auto: update
+#     show-sql: true
+#     database: postgresql
+#     database-platform: org.hibernate.dialect.PostgreSQLDialect
+# app:
+#   jwt:
+#     expiration: ${JWT_EXPIRATION_MS:86400000}
+#     privateKeyPath: ${JWT_PRIVATE_KEY_PATH:classpath:private.key}
+#     publicKeyPath: ${JWT_PUBLIC_KEY_PATH:classpath:public.key}
+
+spring:
+  application:
+    name: filesyncserver
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/file_sync}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:0000}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  address: ${SERVER_ADDRESS:localhost}
+  port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    expiration: ${JWT_EXPIRATION_MS:86400000}
+    privateKeyPath: ${JWT_PRIVATE_KEY_PATH:classpath:private.key}
+    publicKeyPath: ${JWT_PUBLIC_KEY_PATH:classpath:public.key}

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${HOST_PORT}:8080"
+    environment:
+      - SERVER_ADDRESS=0.0.0.0
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - JWT_PRIVATE_KEY_PATH=/app/secrets/private.key
+      - JWT_PUBLIC_KEY_PATH=/app/public.key
+    volumes:
+      - ./secrets:/app/secrets:ro
+      - file-storage:/app/storage
+    depends_on:
+      - db
+    networks:
+      - filesync-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - filesync-network
+
+volumes:
+  postgres-data:
+  file-storage:
+
+networks:
+  filesync-network:
+    driver: bridge
