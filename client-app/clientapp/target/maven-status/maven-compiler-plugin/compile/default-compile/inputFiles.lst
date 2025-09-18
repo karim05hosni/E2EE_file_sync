@@ -1,0 +1,13 @@
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\entities\kdfMetadata.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\entities\KeyMetadata.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\entities\WrappedPrivK.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\contracts\ICryptoService.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\CrytoService.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\UMKutils.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\DIcontainer\AppFactory.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\Main.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\setup\OnboardingManager.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\storage\config\StorageConfig.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\storage\services\contracts\IKeyStorageService.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\storage\services\impl\FileKeyStorage.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\SymmetricEncryption.java

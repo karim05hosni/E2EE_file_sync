@@ -1,0 +1,13 @@
+com\karimhosny\crypto\services\impl\CrytoService.class
+com\karimhosny\storage\config\StorageConfig.class
+com\karimhosny\setup\OnboardingManager.class
+com\karimhosny\storage\services\contracts\IKeyStorageService.class
+com\karimhosny\crypto\services\contracts\ICryptoService.class
+com\karimhosny\crypto\entities\KeyMetadata.class
+com\karimhosny\storage\services\impl\FileKeyStorage.class
+com\karimhosny\DIcontainer\AppFactory.class
+com\karimhosny\crypto\services\impl\UMKutils.class
+com\karimhosny\Main.class
+com\karimhosny\crypto\entities\WrappedPrivK.class
+SymmetricEncryption.class
+com\karimhosny\crypto\entities\kdfMetadata.class

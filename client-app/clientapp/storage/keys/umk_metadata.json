@@ -1,0 +1,7 @@
+{
+  "algorithm" : "argon2id",
+  "salt" : "xiLsOH7ooq/dJw==",
+  "memory" : 65536,
+  "iterations" : 3,
+  "parallelism" : 1
+}
