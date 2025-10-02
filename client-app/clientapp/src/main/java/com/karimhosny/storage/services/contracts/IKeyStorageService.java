@@ -13,7 +13,6 @@ public interface IKeyStorageService {
     WrappedPrivK loadWrappedPrivateKey() throws IOException;
 
     void saveUMK(kdfMetadata umkMetadata) throws IOException;
-    
 
     kdfMetadata loadUMK() throws IOException;
 

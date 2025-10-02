@@ -11,12 +11,14 @@ import lombok.Setter;
 public class AuthUser {
     private  Long id;
     private  String name;
-
-    public AuthUser(Long id, String name){
+    private  Long SpaceId;
+    public AuthUser(Long id, String name, Long SpaceId){
         this.id = id;
         this.name = name;
+        this.SpaceId = SpaceId;
     }
     public Long getId() { return id; }
     public String getUsername() { return name; }
+    public Long getSpaceId() {return SpaceId;}
 
 }

@@ -1,106 +1,144 @@
 package com.karimhosny.crypto.services.impl;
 
 import java.io.IOException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.karimhosny.crypto.entities.WrappedPrivK;
-import com.karimhosny.crypto.entities.kdfMetadata;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+
+import org.bouncycastle.util.encoders.Hex;
+
+import com.karimhosny.auth.api.UserSession;
+import com.karimhosny.crypto.dto.EncryptedFileResult;
+import com.karimhosny.crypto.dto.FileMetadata;
 import com.karimhosny.crypto.services.contracts.ICryptoService;
-import com.karimhosny.storage.services.contracts.IKeyStorageService;
+import com.karimhosny.storage.services.contracts.IFileStorageService;
 
 public class CrytoService implements ICryptoService {
 
-    private IKeyStorageService keyStorageService;
+    private final IFileStorageService fileStorageService;
+    private final UserKeysUtils userKeysUtils;
 
-    private static final SecureRandom RNG = new SecureRandom();
+    public CrytoService(IFileStorageService fileStorageService, UserKeysUtils userKeysUtils) {
+        this.fileStorageService = fileStorageService;
+        this.userKeysUtils = userKeysUtils;
+    }
 
-    public CrytoService(IKeyStorageService keyStorageService) {
-        this.keyStorageService = keyStorageService;
+    private SecretKey generateDEK() throws NoSuchAlgorithmException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(256);
+        SecretKey key = keyGenerator.generateKey();
+        return key;
+    }
+
+    private GCMParameterSpec generateIv() {
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+        return new GCMParameterSpec(128, iv);
+    }
+    private Map<Long, PublicKey> getSpaceUsersPubKeys() {
+        return userKeysUtils.fetchSpaceUsersPubKeys();
+    }
+    private  byte[] encryptDEK(byte[] dek, PublicKey publicKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        return cipher.doFinal(dek);
     }
 
     @Override
-    public void initUMK() {
-        String password = "karim1234";
+    public EncryptedFileResult encryptFile(Path filePath) {
         try {
-            UMKutils.initUmkArgon2(password.toCharArray(), genSalt(10));
+            InputStream file = fileStorageService.loadFile(filePath);
+
+            SecretKey DEK = generateDEK();
+            GCMParameterSpec ivSpec = generateIv();
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, DEK, ivSpec);
+
+            // get space's users' pubkeys from the server 
+            Map<Long, PublicKey> usersPubKs = userKeysUtils.fetchSpaceUsersPubKeys();
+            // Encrypt DEK with users' pubkeys "use concurrency "Thread Pool" for efficiency"
+            Map<Long, byte[]> encryptedDEKsMap = new HashMap<>();
+
+            for (Long userId : usersPubKs.keySet()) {
+                byte[] cipherDEK = encryptDEK(DEK.getEncoded(), usersPubKs.get(userId));
+                encryptedDEKsMap.put(userId, cipherDEK);
+            }
+
+            // Compute checksum 
+            String checksum = computeChecksum(file);
+
+            FileMetadata metadata = new FileMetadata();
+            metadata.setChecksum(checksum);
+            metadata.setIv(ivSpec.getIV());
+            metadata.setEncryptedDEKs(encryptedDEKsMap);
+            metadata.setSize(Files.size(filePath));
+            metadata.setTimestamp(System.currentTimeMillis());
+            metadata.setExt(getFileExtension(filePath.getFileName()));
+            metadata.setLocalPath(filePath.toString());
+            metadata.setBy(UserSession.getInstance().getCurrentUser().getId());
+            metadata.setSpaceId(UserSession.getInstance().getCurrentUser().getSpaceId());
+
+            return new EncryptedFileResult(new CipherInputStream(file, cipher), metadata);
+        } catch (NoSuchAlgorithmException ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (NoSuchPaddingException ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         } catch (IOException ex) {
             System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (InvalidKeyException ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (InvalidAlgorithmParameterException ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (Exception ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
+        return null;
     }
 
-    @Override
-    public void initUserKeys() {
+    public String computeChecksum(InputStream file) {
         try {
-            // generate pairs
-            KeyPair pairs = generatePairs();
-            // load umk
-            kdfMetadata umkMetadata = keyStorageService.loadUMK();
-            byte[] umk = deriveUMK(umkMetadata);
-            // encrypt privk
-            WrappedPrivK privk = UMKutils.encryptPrivateKeyWithUmk(umk, pairs.getPrivate().getEncoded(), umkMetadata.getSalt());
-            // persist privk
-            keyStorageService.saveWrappedPrivateKey(privk);
-            // send pubk to server
-
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    private byte[] deriveUMK(kdfMetadata umkMetadata) {
-        // fetch user password
-        String password = "karim1234";
-        // derive umk
-        return UMKutils.deriveUmkArgon2(password.toCharArray(), umkMetadata.getSalt());
-    }
-
-    private KeyPair generatePairs() {
-        try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(2048);
-            KeyPair keyPair = keyPairGenerator.generateKeyPair();
-            return keyPair;
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] input = file.readAllBytes();
+            byte[] digest = messageDigest.digest(input);
+            return Hex.toHexString(digest);
+        } catch (IOException ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         } catch (NoSuchAlgorithmException ex) {
-            return null;
         }
-    }
-
-
-    private static byte[] genSalt(int len) {
-        byte[] s = new byte[len];
-        RNG.nextBytes(s);
-        return s;
+        return null;
     }
 
     @Override
-    public byte[] loadPrivK() {
-        try {
-            // fetch privk from storage
-            WrappedPrivK privKObj = keyStorageService.loadWrappedPrivateKey();
-            // derive umk
-            byte[] umk = loadUMK();
-            // decrypt privk
-            return UMKutils.decryptPrivateKeyWithUmk(privKObj, umk);
-        } catch (Exception e) {
-            System.out.println("from CryptoService.loadPrivK()" + e);
-            return null;
-        }
+    public void decryptFile() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public byte[] loadUMK() {
-        try {
-            // fetch umk metadata from storage
-            kdfMetadata umkMetadata = keyStorageService.loadUMK();
-            // derive umk
-            return deriveUMK(umkMetadata);
-        } catch (IOException e) {
-            System.out.println("from CryptoService.loadUMK()" + e);
+    private String getFileExtension(Path filePath) {
+        String filename = filePath.toString();
+        if (filename == null) {
             return null;
         }
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex >= 0) {
+            return filename.substring(dotIndex + 1);
+        }
+        return "";
     }
 
 }

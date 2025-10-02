@@ -2,13 +2,13 @@ package com.karimhosny.crypto.services.impl;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 
-import javax.crypto.AEADBadTagException;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,6 +18,7 @@ import org.bouncycastle.crypto.params.Argon2Parameters;
 
 import com.karimhosny.crypto.entities.WrappedPrivK;
 import com.karimhosny.crypto.entities.kdfMetadata;
+import com.karimhosny.crypto.errorsHandling.CryptoOperationException;
 import com.karimhosny.storage.services.contracts.IKeyStorageService;
 
 public class UMKutils {
@@ -43,20 +44,27 @@ public class UMKutils {
         keystorage.saveUMK(kdf);
     }
 
+
     public static byte[] deriveUmkArgon2(char[] password, byte[] salt) {
+        
+        // setup the parameters
         Argon2Parameters.Builder builder = new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
                 .withSalt(salt)
                 .withParallelism(ARGON2_PARALLELISM)
                 .withIterations(ARGON2_ITERATIONS)
                 .withMemoryAsKB(ARGON2_MEMORY_KB);
 
+        // create and initialize the generator class
         Argon2BytesGenerator generator = new Argon2BytesGenerator();
         generator.init(builder.build());
+
+        // create memory buffer to hold the key
         byte[] out = new byte[UMK_LEN_BYTES];
-        // convert char[] -> bytes (UTF-8). Minimize lifetime.
+
+        // convert char[] -> bytes (UTF-8). so Argon2 can work on it
         byte[] pwdBytes = toUtf8Bytes(password);
-        // byte[] UMKpem;
         try {
+            // derive the UMK from password bytes and store it in memory
             generator.generateBytes(pwdBytes, out);
             return out;
         } finally {
@@ -66,59 +74,64 @@ public class UMKutils {
     }
 
     // --- AES-GCM wrap private key ---
-    public static WrappedPrivK encryptPrivateKeyWithUmk(
-            byte[] umk, byte[] privateKeyBytes, byte[] salt) throws Exception {
+    public static WrappedPrivK encryptPrivateKeyWithUmk(byte[] umk, byte[] privateKeyBytes, byte[] salt) {
+        try {
+            byte[] iv = new byte[GCM_IV_LEN]; // e.g. 12 bytes
+            RNG.nextBytes(iv);
 
-        byte[] iv = new byte[GCM_IV_LEN]; // e.g. 12 bytes
-        RNG.nextBytes(iv);
+            SecretKeySpec keySpec = new SecretKeySpec(umk, "AES");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_BITS, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec);
 
-        SecretKeySpec keySpec = new SecretKeySpec(umk, "AES");
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_BITS, iv);
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec);
+            byte[] cipherBytes = cipher.doFinal(privateKeyBytes);
 
-        byte[] cipherBytes = cipher.doFinal(privateKeyBytes);
+            WrappedPrivK w = new WrappedPrivK();
+            w.kdfAlgorithm = "argon2id";
+            w.kdf_params = Map.of(
+                    "memory_kb", ARGON2_MEMORY_KB,
+                    "iterations", ARGON2_ITERATIONS,
+                    "parallelism", ARGON2_PARALLELISM
+            );
+            w.salt = Base64.getEncoder().encodeToString(salt);
+            w.aes_gcm_iv = Base64.getEncoder().encodeToString(iv);
+            w.ciphertext = Base64.getEncoder().encodeToString(cipherBytes);
+            w.created_at = Instant.now().toString();
 
-        WrappedPrivK w = new WrappedPrivK();
-        w.kdfAlgorithm = "argon2id";
-        w.kdf_params = Map.of(
-                "memory_kb", ARGON2_MEMORY_KB,
-                "iterations", ARGON2_ITERATIONS,
-                "parallelism", ARGON2_PARALLELISM
-        );
-        w.salt = Base64.getEncoder().encodeToString(salt);
-        w.aes_gcm_iv = Base64.getEncoder().encodeToString(iv);
-        w.ciphertext = Base64.getEncoder().encodeToString(cipherBytes);
-        w.created_at = Instant.now().toString();
+            // Cleanup sensitive material
+            Arrays.fill(umk, (byte) 0);
+            Arrays.fill(privateKeyBytes, (byte) 0);
 
-        // Cleanup sensitive material
-        Arrays.fill(umk, (byte) 0);
-        Arrays.fill(privateKeyBytes, (byte) 0);
+            return w;
+        } catch (GeneralSecurityException e) {
+            throw new CryptoOperationException("Failed to decrypt private key", e);
 
-        return w;
+        }
+
     }
 
-    public static byte[] decryptPrivateKeyWithUmk(WrappedPrivK wrapped, byte[] umk) throws Exception {
-        // Decode base64 fields
-        byte[] iv = Base64.getDecoder().decode(wrapped.aes_gcm_iv);
-        byte[] cipherBytes = Base64.getDecoder().decode(wrapped.ciphertext);
-
-        // Reconstruct AES key from UMK
-        SecretKeySpec keySpec = new SecretKeySpec(umk, "AES");
-
-        // Setup cipher in decrypt mode
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_BITS, iv);
-        cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
-
+    public static byte[] decryptPrivateKeyWithUmk(WrappedPrivK wrapped, byte[] umk) {
         try {
+            // Decode base64 fields
+            byte[] iv = Base64.getDecoder().decode(wrapped.aes_gcm_iv);
+            byte[] cipherBytes = Base64.getDecoder().decode(wrapped.ciphertext);
+
+            // Reconstruct AES key from UMK
+            SecretKeySpec keySpec = new SecretKeySpec(umk, "AES");
+
+            // Setup cipher in decrypt mode
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_BITS, iv);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
+
             // This will both decrypt and verify GCM tag
             return cipher.doFinal(cipherBytes);
-        } catch (AEADBadTagException e) {
-            // Wrong UMK, corrupted ciphertext, or tampered data
-            throw new SecurityException("Failed to authenticate data (bad key or modified ciphertext)", e);
+
+        } catch (GeneralSecurityException e) {
+            throw new CryptoOperationException("Failed to decrypt private key", e);
+
         } finally {
-            // Optional: wipe UMK from memory
+            // Always wipe secret
             Arrays.fill(umk, (byte) 0);
         }
     }

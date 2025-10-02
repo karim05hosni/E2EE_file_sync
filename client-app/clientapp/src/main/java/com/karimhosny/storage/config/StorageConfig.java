@@ -12,6 +12,7 @@ public class StorageConfig {
     private final Path privateKeyPath;
     private final Path publicKeyPath;
     private final Path umkMetadataPath;
+    private final Path filesMetadata;
 
     public StorageConfig(String baseDir) throws IOException {
         this.basePath = Path.of(baseDir).toAbsolutePath();
@@ -19,19 +20,26 @@ public class StorageConfig {
         this.privateKeyPath = basePath.resolve("keys/");
         this.publicKeyPath = basePath.resolve("keys/");
         this.umkMetadataPath = basePath.resolve("keys/");
+        this.filesMetadata = basePath.resolve("filesMetadata");
         init();
     }
 
     private void init() throws IOException {
         // create base
         Files.createDirectories(basePath);
+        System.out.println("base folder created");
 
         // workspace folder
         Files.createDirectories(workspacePath);
+        System.out.println("workspace folder created");
 
         // keys folder
-        Files.createDirectories(privateKeyPath.getParent());
+        Files.createDirectories(privateKeyPath);
+        System.out.println("keys folder created");
 
+        // filesMetadata folder
+        Files.createDirectories(filesMetadata);
+        System.out.println("filesMetadata folder created");
 
     }
 
@@ -54,5 +62,9 @@ public class StorageConfig {
 
     public Path getUmkMetadataPath(){
         return umkMetadataPath;
+    }
+
+    public Path getFilesMetadata() {
+        return filesMetadata;
     }
 }

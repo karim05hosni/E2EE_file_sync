@@ -1,20 +1,14 @@
 package com.karimhosny.crypto.services.contracts;
 
-import java.security.PrivateKey;
+import java.nio.file.Path;
+
+import com.karimhosny.crypto.dto.EncryptedFileResult;
 
 public interface ICryptoService {
 
 
-    void initUserKeys();
 
-    byte[] loadPrivK();
+    EncryptedFileResult encryptFile(Path filePath);
 
-    // byte[] loadPubK();
-
-
-    byte[] loadUMK();
-
-    void initUMK();
-
-
+    void decryptFile();
 }

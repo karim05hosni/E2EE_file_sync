@@ -34,3 +34,7 @@ build/
 
 .env
 secrets/
+
+target/
+karim-cert.cer
+keystore.p12

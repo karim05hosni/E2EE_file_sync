@@ -1,0 +1,68 @@
+--------Files classes--------
+
+WatchService
+
+    Role: The engine that listens for file system changes.
+
+    How it works: You register one or more Paths (directories, not individual files) to watch.
+
+    Tied to:
+
+    Needs WatchKey objects (see below) to represent active registrations.
+
+    Returns file events when something changes in those directories.
+
+WatchKey
+
+    Role: A subscription token you get when registering a directory.
+
+    How it works:
+
+    When you register a Path with watchService.register(...), you get a WatchKey.
+
+    That key is used internally to group events for that directory.
+
+    After you process events, you call key.reset() to keep listening.
+
+WatchEvent
+
+    Role: A single event reported by the OS (like “file created”, “file modified”).
+
+    Kinds available:
+
+    ENTRY_CREATE
+
+    ENTRY_MODIFY
+
+    ENTRY_DELETE
+
+    Context: Usually the filename inside the watched directory (you combine it with the base Path to get the full file path).
+
+BlockingQueue (from java.util.concurrent)
+
+    Role: Stores events in order and lets another thread consume them safely.
+
+    Why needed:
+
+    File system events come in quickly, sometimes too fast.
+
+    Using a queue decouples watching from processing.
+
+    Keeps code clean and avoids missed events.
+
+
+ExecutorService or Thread
+
+    Role: Runs background loops (watcher loop and processor loop).
+
+    Why:
+
+    watchService.take() is blocking → best to run in a dedicated thread.
+
+    Processing (encrypting/uploading) may take time → run in another thread.
+
+    Options:
+
+    Simple new Thread(() -> {...}).start() for MVP.
+
+    Executors.newSingleThreadExecutor() for cleaner shutdowns.

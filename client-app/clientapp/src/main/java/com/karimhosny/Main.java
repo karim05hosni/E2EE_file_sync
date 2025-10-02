@@ -1,20 +1,21 @@
 package com.karimhosny;
 
-import java.util.Arrays;
-
 import com.karimhosny.DIcontainer.AppFactory;
+import com.karimhosny.auth.api.UserSession;
+import com.karimhosny.auth.entities.User;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         System.out.println("Client starting...");
 
         try {
-            AppFactory factory = new AppFactory("D:\\Projects\\distributed_file_sync\\client-app\\clientapp\\storage");
-            factory.getOnboardingManager().run();
-            
-            System.out.println(Arrays.toString(factory.getCryptoService().loadPrivK()));
+            AppFactory appFactory = new AppFactory("D:\\Projects\\distributed_file_sync\\client-app\\clientapp\\storage");
+            appFactory.getAuthService().login("karim@123.com", "1234567");
+            User user = UserSession.getInstance().getCurrentUser();
+            appFactory.getWsClient().connect("ws://localhost:8080/ws");
+            appFactory.getUploadPipelineManager().start();
         } catch (Exception ex) {
-            System.out.println(ex);
+            throw ex;
         }
 
 

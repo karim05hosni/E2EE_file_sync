@@ -50,13 +50,15 @@ public class UserServices implements IUserServices {
             );
 
             // Save user
-            userRepository.save(user);
+            User saveduser = userRepository.save(user);
 
             // Generate JWT token
             String token = jwtServices.issueToken(user);
 
             // Create auth response
             AuthResponse authResponse = AuthResponse.builder()
+                    .id(saveduser.getId())
+                    .name(saveduser.getName())
                     .token(token)
                     .build();
                     
@@ -97,6 +99,9 @@ public class UserServices implements IUserServices {
             
             // Create auth response
             AuthResponse authResponse = AuthResponse.builder()
+                    .id(user.getId())
+                    .spaceId(user.getSpaceId())
+                    .name(user.getName())
                     .token(token)
                     .build();
             

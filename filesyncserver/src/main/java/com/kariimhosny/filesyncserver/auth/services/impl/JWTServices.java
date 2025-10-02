@@ -67,7 +67,7 @@ public class JWTServices implements IJWTServices {
             .claim("username", user.getName()) // Additional claims
             .claim("email", user.getEmail())
             .claim("userId", user.getId())
-            .claim("spaceId", user.getSpaceId() != null ? user.getSpaceId().toString() : null)
+            .claim("spaceId", user.getSpaceId())
             .issuedAt(new Date()) // Token creation time
             .expiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000)) // 24 hours expiration
             .signWith(privK, Jwts.SIG.RS256) // Explicit algorithm specification

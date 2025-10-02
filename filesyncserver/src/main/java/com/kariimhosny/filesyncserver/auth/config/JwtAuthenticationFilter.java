@@ -46,17 +46,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtTokenService.isValidToken(token)) {
                 // extract the claims (token data)
                 Claims claims = jwtTokenService.extractClaims(token);
+                System.out.println("Token Claims" + claims);
                 String username = claims.get("username", String.class);
                 Long user_id = claims.get("userId", Long.class);
-                System.out.println("Token Claims" + claims);
-                // for (Object elem : claims.values()) {
-                //     System.out.println(elem);
-                // }
-                AuthUser user = new AuthUser(user_id, username);
+                Long space_id = claims.get("spaceId", Long.class);
+
+                AuthUser user = new AuthUser(user_id, username, space_id);
 
                 Authentication auth;
                 auth = new UsernamePasswordAuthenticationToken(
-                        user, // username as principal
+                        user, 
                         null, // no credentials
                         List.of() // no authorities (add if you need role-based auth)
                 );

@@ -27,8 +27,8 @@ public class SecurityConfig  {
         http
             .csrf(csrf -> csrf.disable()) // Common for stateless APIs
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated() // All other endpoints need a valid JWT
+                .requestMatchers("**").permitAll()
+                // .anyRequest().authenticated() // All other endpoints need a valid JWT
 
             ).addFilterBefore(jwtfilter, UsernamePasswordAuthenticationFilter.class)
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
