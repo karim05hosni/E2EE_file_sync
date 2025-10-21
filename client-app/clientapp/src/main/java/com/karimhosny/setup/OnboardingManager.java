@@ -1,5 +1,8 @@
 package com.karimhosny.setup;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.karimhosny.auth.api.UserSession;
 import com.karimhosny.auth.services.contracts.IAuthService;
 import com.karimhosny.crypto.services.contracts.ICryptoService;
@@ -7,6 +10,7 @@ import com.karimhosny.crypto.services.impl.UserKeysUtils;
 import com.karimhosny.storage.config.StorageConfig;
 
 public class OnboardingManager {
+
     private final StorageConfig storageConfig;
     private final ICryptoService cryptoService;
     private final UserKeysUtils userKeysUtils;
@@ -21,9 +25,17 @@ public class OnboardingManager {
 
     public void run() throws Exception {
         // if first time (no keys), you can trigger onboarding logic here
-        // if (Files.exists(storageConfig.getPrivateKeyPath()) || Files.exists(storageConfig.getUmkMetadataPath())) {
-        //     return;
-        // }
+        Path privKey = storageConfig.getPrivateKeyPath().resolve("wrapped_privk.json");
+        Path metadataDir = storageConfig.getFilesMetadata();
+
+        boolean hasKeys = Files.exists(privKey);
+        boolean hasMetadata = Files.exists(metadataDir);
+
+        if (hasKeys && hasMetadata) {
+            System.out.println("Setup already complete — skipping onboarding.");
+            return;
+        }
+
         System.out.println("First time setup detected, onboarding…");
         // 1. Initialize storage folders (already handled inside StorageConfig constructor)
 

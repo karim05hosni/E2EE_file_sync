@@ -39,3 +39,6 @@ client-app\clientapp\target
 filesyncserver\target
 karim-cert.cer
 keystore.p12
+client-app/clientapp/storage
+client-app\clientapp\clients\1\**
+client-app\clientapp\clients\2\**

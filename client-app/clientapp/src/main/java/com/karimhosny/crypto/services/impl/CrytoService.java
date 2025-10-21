@@ -8,8 +8,11 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +22,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.util.encoders.Hex;
 
@@ -50,13 +54,21 @@ public class CrytoService implements ICryptoService {
         new SecureRandom().nextBytes(iv);
         return new GCMParameterSpec(128, iv);
     }
+
     private Map<Long, PublicKey> getSpaceUsersPubKeys() {
         return userKeysUtils.fetchSpaceUsersPubKeys();
     }
-    private  byte[] encryptDEK(byte[] dek, PublicKey publicKey) throws Exception {
+
+    private byte[] encryptDEK(byte[] dek, PublicKey publicKey) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         return cipher.doFinal(dek);
+    }
+
+    private byte[] decryptDEK(byte[] encryptedDek, PrivateKey privateKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return cipher.doFinal(encryptedDek);
     }
 
     @Override
@@ -82,7 +94,10 @@ public class CrytoService implements ICryptoService {
 
             // Compute checksum 
             String checksum = computeChecksum(file);
+            file.close();
 
+            // reopen it for encryption
+            InputStream fileToEncrypt = Files.newInputStream(filePath);
             FileMetadata metadata = new FileMetadata();
             metadata.setChecksum(checksum);
             metadata.setIv(ivSpec.getIV());
@@ -94,7 +109,7 @@ public class CrytoService implements ICryptoService {
             metadata.setBy(UserSession.getInstance().getCurrentUser().getId());
             metadata.setSpaceId(UserSession.getInstance().getCurrentUser().getSpaceId());
 
-            return new EncryptedFileResult(new CipherInputStream(file, cipher), metadata);
+            return new EncryptedFileResult(new CipherInputStream(fileToEncrypt, cipher), metadata);
         } catch (NoSuchAlgorithmException ex) {
             System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         } catch (NoSuchPaddingException ex) {
@@ -111,6 +126,7 @@ public class CrytoService implements ICryptoService {
         return null;
     }
 
+
     public String computeChecksum(InputStream file) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
@@ -125,8 +141,28 @@ public class CrytoService implements ICryptoService {
     }
 
     @Override
-    public void decryptFile() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public InputStream decryptFile(InputStream encryptedFile, byte[] encryptDEK, byte[] Iv) throws Exception {
+            // fetch user's private key
+            PrivateKey privateKey = userKeysUtils.loadPrivK();
+            // decrypt dek
+            byte[] dekBytes = decryptDEK(encryptDEK, privateKey);
+            SecretKey dek = new SecretKeySpec(dekBytes, 0, dekBytes.length, "AES");
+        try {
+            // decrypt file
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec ivSpec = new GCMParameterSpec(128, Iv);
+            cipher.init(Cipher.DECRYPT_MODE, dek, ivSpec);
+            System.out.println("File Decrypted with params: ");
+            System.out.println("encryptedDEK: " + Base64.getEncoder().encodeToString(encryptDEK));
+            System.out.println("IV: " + Base64.getEncoder().encodeToString(Iv));
+            return new CipherInputStream(encryptedFile, cipher);
+        } catch (Exception ex) {
+            System.getLogger(CrytoService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } finally {
+            // Clean sensitive data
+            Arrays.fill(dekBytes, (byte) 0);
+        }
+        return null;
     }
 
     private String getFileExtension(Path filePath) {

@@ -14,25 +14,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.karimhosny.file.uploadPipeline.entities.FileEvent;
+import com.karimhosny.file.EventsSuppressor;
 import com.karimhosny.file.uploadPipeline.jobs.EncryptJob;
-import com.karimhosny.file.uploadPipeline.jobs.UploadMetadataJob;
 import com.karimhosny.storage.config.StorageConfig;
 
 public class FileWatcher implements Runnable {
 
     private StorageConfig storageConfig;
-
+    private EventsSuppressor eventsSuppressor;
     private WatchService watchService;
     private Path workspace;
     private ExecutorService executorService;
     private Map<WatchEvent.Kind<?>, EncryptJob.Type> eventMap;
     private BlockingQueue<EncryptJob> encryptQueue;
 
-    public FileWatcher(StorageConfig storageConfig, BlockingQueue<EncryptJob> encryptQueue) throws IOException {
+    public FileWatcher(EventsSuppressor eventsSuppressor, StorageConfig storageConfig, BlockingQueue<EncryptJob> encryptQueue) throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.workspace = storageConfig.getWorkspacePath();
         this.encryptQueue = encryptQueue;
+        this.eventsSuppressor = eventsSuppressor;
 
         workspace.register(
                 watchService,
@@ -71,19 +71,32 @@ public class FileWatcher implements Runnable {
 
     private void iterateEvents(WatchKey key, BlockingQueue<EncryptJob> encryptQueue) {
         for (WatchEvent<?> event : key.pollEvents()) {
+            String fullPath = event.context().toString();
+            System.out.println("From Watcher, fullPath: "+fullPath);
+
+            // System.out.println("From Watcher, relativePath: "+relativePath);
+            System.out.println("From Watcher, isSuppressed: "+ workspace.resolve(fullPath));
+            if (eventsSuppressor.isSuppressed(workspace.resolve(fullPath))) {
+                System.out.println("Suppressed Path: " + event.context());
+                continue;
+            }
             handleWatchEvent(event, encryptQueue);
         }
         key.reset();
     }
 
     private void handleWatchEvent(WatchEvent<?> event, BlockingQueue<EncryptJob> encryptQueue) {
+        String fullPath = event.context().toString();
+        if (eventsSuppressor.isSuppressed(workspace.resolve(fullPath))) {
+            System.out.println("Suppressed Path: " + event.context());
+            return;
+        }
 
         // protect against null events
         EncryptJob.Type type = eventMap.get(event.kind());
         if (type == null) {
             return;
         }
-
 
         // get affected file path
         Path affectedFile = workspace.resolve((Path) event.context());
@@ -97,7 +110,5 @@ public class FileWatcher implements Runnable {
             System.err.println("Failed to enqueue file event: " + e.getMessage());
         }
     }
-
-
 
 }

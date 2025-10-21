@@ -65,8 +65,8 @@ public interface UserKeysRepository extends JpaRepository<UserKey, Long> {
      * @return 
      */
     // @Query("SELECT uk.publicKey FROM UserKey uk JOIN uk.user u WHERE u.space.id = :spaceId AND uk.isActive = true")
-     @Query(value = "SELECT uk.public_key, u.id as user_id FROM user_keys uk JOIN users u ON uk.user_id = u.id WHERE u.space_id = 5 AND uk.is_active = true", 
-           nativeQuery = true)
+    @Query(value = "SELECT uk.public_key, u.id as user_id FROM user_keys uk JOIN users u ON uk.user_id = u.id WHERE u.space_id = :spaceId AND uk.is_active = true", 
+        nativeQuery = true)
     List<UserKeysView> findActiveUserPublicKeysBySpace(@Param("spaceId") Long spaceId);
 
     /**

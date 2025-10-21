@@ -73,7 +73,7 @@ public class SpaceService implements  ISpaceService{
         // Assuming AuthUser has getId()
 
         // Check if user is already in a space
-        if (userRepository.findBySpaceId(authUser.getId()) != null) {
+        if (userRepository.findUserInSpace(authUser.getId(), space.getId()) != null) {
             throw new RuntimeException("User is already in a space");
         }
 

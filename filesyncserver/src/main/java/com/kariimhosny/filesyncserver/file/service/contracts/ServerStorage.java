@@ -1,5 +1,7 @@
 package com.kariimhosny.filesyncserver.file.service.contracts;
 
+import java.nio.file.Path;
+
 public interface ServerStorage {
     void saveMetadata(byte[] data);
     void saveFile(byte[] data, Integer fileId, int version_no, Long spaceId);
@@ -7,4 +9,5 @@ public interface ServerStorage {
     void saveFileVersionDEKs(Long fileId, Long versionId, byte[] dek);
     boolean exists(String path);
     // List<String> listFiles(String directory);
+    Path getFilePath(Integer fileId, Long spaceId, int version_no);
 }

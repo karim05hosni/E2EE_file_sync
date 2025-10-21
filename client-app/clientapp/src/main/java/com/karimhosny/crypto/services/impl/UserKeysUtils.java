@@ -5,9 +5,11 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
@@ -91,17 +93,30 @@ public class UserKeysUtils {
         }
     }
 
-    public byte[] loadPrivK() {
+    public PrivateKey loadPrivK() {
         try {
             // fetch privk from storage
             WrappedPrivK privKObj = keyStorageService.loadWrappedPrivateKey();
             // derive umk
             byte[] umk = loadUMK();
             // decrypt privk
-            return UMKutils.decryptPrivateKeyWithUmk(privKObj, umk);
+            byte[] privateKeyBytes= UMKutils.decryptPrivateKeyWithUmk(privKObj, umk);
+            // Step 1: Wrap the raw bytes in a PKCS8EncodedKeySpec
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+
+            // Step 2: Get the KeyFactory for your algorithm (RSA in this case)
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+            // Step 3: Generate the PrivateKey object
+            return keyFactory.generatePrivate(keySpec);
         } catch (IOException ex) {
             throw new CryptoOperationException("Failed to load Private key: ", ex);
+        } catch (NoSuchAlgorithmException ex) {
+            System.getLogger(UserKeysUtils.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } catch (InvalidKeySpecException ex) {
+            System.getLogger(UserKeysUtils.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
+        return null;
     }
 
     public byte[] loadUMK() {

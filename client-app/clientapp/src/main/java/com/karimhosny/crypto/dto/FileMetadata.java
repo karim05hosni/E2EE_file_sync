@@ -9,7 +9,7 @@ public class FileMetadata {
     private String checksum;
     private int version;
     private byte[] iv;
-    private Map<Long,byte[]> encryptedDEK;
+    private Map<Long, byte[]> encryptedDEK;
     private long size;
     private long timestamp;
     private String ext;
@@ -24,7 +24,21 @@ public class FileMetadata {
         encryptedDEK = new HashMap<>();
     }
 
-    
+    public FileMetadata(int fileId, String checksum, int version, byte[] iv, Map<Long, byte[]> encryptedDEK, long size, long timestamp, String ext, Long by, Long owner, Long spaceId, String localPath, String action) {
+        this.fileId = fileId;
+        this.checksum = checksum;
+        this.version = version;
+        this.iv = iv;
+        this.encryptedDEK = encryptedDEK;
+        this.size = size;
+        this.timestamp = timestamp;
+        this.ext = ext;
+        this.by = by;
+        this.owner = owner;
+        this.spaceId = spaceId;
+        this.localPath = localPath;
+        this.action = action;
+    }
 
     // getters + setters
     public String getChecksum() {
@@ -39,7 +53,7 @@ public class FileMetadata {
         return iv;
     }
 
-    public Map<Long,byte[]> getEncryptedDEK() {
+    public Map<Long, byte[]> getEncryptedDEK() {
         return encryptedDEK;
     }
 
@@ -71,7 +85,7 @@ public class FileMetadata {
         this.iv = iv;
     }
 
-    public void setEncryptedDEKs(Map<Long,byte[]> encryptedDEKs){
+    public void setEncryptedDEKs(Map<Long, byte[]> encryptedDEKs) {
         this.encryptedDEK = encryptedDEKs;
     }
 
@@ -134,5 +148,7 @@ public class FileMetadata {
     public int getFileId() {
         return fileId;
     }
+
+
 
 }

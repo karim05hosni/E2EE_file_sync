@@ -53,7 +53,10 @@ public class LocalDiskStorage implements ServerStorage {
             System.getLogger(LocalDiskStorage.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
     }
-
+    public Path getFilePath(Integer fileId, Long spaceId, int version_no){
+        String file = "spaces/" + spaceId + "/files" + "/" + fileId + "/v[" + version_no + "].bin";
+        return root.resolve(file);
+    }
     @Override
     public byte[] readFile(String path) {
         throw new UnsupportedOperationException("Not supported yet.");

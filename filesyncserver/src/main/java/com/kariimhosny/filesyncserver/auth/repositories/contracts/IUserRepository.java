@@ -26,6 +26,9 @@ public interface IUserRepository extends JpaRepository<User, Long>{
     // Find users without a space (not assigned to any space yet)
     List<User> findBySpaceIdIsNull();
     
+    @Query(value="select * from users where id= :userId AND space_id= :spaceId", nativeQuery=true)
+    User findUserInSpace(@Param("userId") Long userId, @Param("spaceId") Long spaceId);
+
     // Update the spaceId for a user
     @Modifying
     @Query("UPDATE User u SET u.spaceId = :spaceId WHERE u.id = :userId")

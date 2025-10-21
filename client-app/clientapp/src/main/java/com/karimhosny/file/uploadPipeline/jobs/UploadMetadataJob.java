@@ -6,14 +6,7 @@ import com.karimhosny.crypto.dto.FileMetadata;
 
 public class UploadMetadataJob implements UploadJob {
     private FileMetadata fileMetadata;
-    // private int version;
-    // private byte[] iv;
-    // private String cipher_checksum;
-    // private long size;
-    // private int by;
-    // private long timestamp;
-    // private String ext;
-    // private String path;
+
 
     public UploadMetadataJob(FileMetadata fileMetadata) {
         this.fileMetadata = fileMetadata;

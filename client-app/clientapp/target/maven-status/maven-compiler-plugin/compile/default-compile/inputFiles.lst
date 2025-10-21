@@ -8,6 +8,7 @@ D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimho
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\config\Client.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\requests\AuthRequests.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\requests\CryptoRequests.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\requests\FileRequest.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\responses\AuthResponse.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\responses\BaseResponse.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\connection\http\responses\CryptoResponses.java
@@ -24,7 +25,16 @@ D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimho
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\UMKutils.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\UserKeysUtils.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\DIcontainer\AppFactory.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\decryptor\Decryptor.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\downloader\Downloader.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\DownloadPipelineManager.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\installer\Installer.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\jobs\DecryptJob.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\jobs\DownloadJob.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\downloadPipeline\jobs\InstallJob.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\EventsSuppressor.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\FileMetadataService.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\IndexManager.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\encryptor\FileEncryptor.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\entities\EncryptedFile.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\entities\FileEvent.java
@@ -32,6 +42,7 @@ D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimho
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\jobs\UploadFileJob.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\jobs\UploadJob.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\jobs\UploadMetadataJob.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\pendingUpload\pendingUpload.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\uploader\FileUploader.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\UploadPipelineManager.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\file\uploadPipeline\watcher\FileWatcher.java

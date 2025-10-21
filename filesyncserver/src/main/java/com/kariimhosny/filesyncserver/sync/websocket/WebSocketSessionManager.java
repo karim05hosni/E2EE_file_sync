@@ -11,8 +11,8 @@ import org.springframework.web.socket.WebSocketSession;
 public class WebSocketSessionManager {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    public void addSession(WebSocketSession session) {
-        sessions.put(session.getId(), session);
+    public void addSession(String userId , WebSocketSession session) {
+        sessions.put(userId, session);
     }
 
     /**

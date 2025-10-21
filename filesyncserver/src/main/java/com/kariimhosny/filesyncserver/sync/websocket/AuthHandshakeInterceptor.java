@@ -1,22 +1,16 @@
 package com.kariimhosny.filesyncserver.sync.websocket;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.kariimhosny.filesyncserver.auth.api.AuthUser;
 import com.kariimhosny.filesyncserver.auth.services.contracts.IJWTServices;
-
-import io.jsonwebtoken.Claims;
 
 @Component
 public class AuthHandshakeInterceptor implements HandshakeInterceptor {
@@ -48,23 +42,9 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
         }
 
         if (token != null && jwtService.isValidToken(token)) {
-            System.out.println("From websocket: Valid token");
-            Claims claims = jwtService.extractClaims(token);
-            System.out.println("Token Claims" + claims);
-            String username = claims.get("username", String.class);
-            Long user_id = claims.get("userId", Long.class);
-            Long space_id = claims.get("spaceId", Long.class);
-
-            AuthUser user = new AuthUser(user_id, username, space_id);
-
-            Authentication auth;
-            auth = new UsernamePasswordAuthenticationToken(
-                    user,
-                    null, // no credentials
-                    List.of() // no authorities (add if you need role-based auth)
-            );
-            attributes.put("auth", user);
             
+            attributes.put("id", jwtService.extractUserId(token));
+            attributes.put("spaceId", jwtService.extractClaims(token).get("spaceId"));
             System.out.println("Thread name from authintereceptor.beforehandshake: " + Thread.currentThread().getName());
             return true; // allow handshake
         }
