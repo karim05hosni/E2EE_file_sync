@@ -16,14 +16,14 @@ public class Installer implements  Runnable {
     public void run() {
         System.out.println("from FileInstaller");
         while (!Thread.currentThread().isInterrupted()) {
-            for (InstallJob installJob : InstallQueue) {
+            // for (InstallJob installJob : InstallQueue) {
                 try {
-                    System.out.println("Install Job executing...");
                     InstallQueue.take().execute();
+                    System.out.println("Install Job executing...");
                 } catch (InterruptedException ex) {
                     System.getLogger(Installer.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                 }
-            }
+            // }
         }
     }
 

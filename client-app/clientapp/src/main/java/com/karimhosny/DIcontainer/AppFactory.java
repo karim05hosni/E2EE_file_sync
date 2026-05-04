@@ -4,7 +4,9 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.karimhosny.auth.services.contracts.IAuthService;
 import com.karimhosny.auth.services.impl.AuthService;
@@ -12,6 +14,7 @@ import com.karimhosny.connection.http.config.Client;
 import com.karimhosny.connection.http.requests.AuthRequests;
 import com.karimhosny.connection.http.requests.CryptoRequests;
 import com.karimhosny.connection.websockets.WsClient;
+import com.karimhosny.crypto.KeysManagement;
 import com.karimhosny.crypto.services.contracts.ICryptoService;
 import com.karimhosny.crypto.services.impl.CrytoService;
 import com.karimhosny.crypto.services.impl.UMKutils;
@@ -45,6 +48,7 @@ import com.karimhosny.storage.services.impl.FileStorage;
 public class AppFactory {
     private final StorageConfig storageConfig;
     private final ICryptoService cryptoService;
+    private final ScheduledExecutorService scheduler;
     private final OnboardingManager onboardingManager;
     private final IKeyStorageService keyStorageService;
     private final UMKutils UMKutils;
@@ -74,10 +78,15 @@ public class AppFactory {
     private final Installer installer;
     private final Decryptor decryptor;
     private final Downloader downloader;
+    private final int FIXED_ELEMENTS_IN_UBQ = 100;
+    private final int FIXED_ELEMENTS_IN_DBQ = 60;
+    private final KeysManagement keysManagement;
+
 
     public AppFactory() throws Exception {
         this.storageConfig = new StorageConfig(); 
         this.keyStorageService = new FileKeyStorage(storageConfig);
+        this.scheduler = Executors.newScheduledThreadPool(1);
         this.suppressedEvents = new ConcurrentHashMap<>();
         this.eventsSuppressor = new EventsSuppressor(suppressedEvents);
         this.fileStorageService = new FileStorage(eventsSuppressor, storageConfig);
@@ -88,33 +97,31 @@ public class AppFactory {
         this.authRequests = new AuthRequests(client);
         this.cryptoRequests = new CryptoRequests(client);
         this.userKeysUtils = new UserKeysUtils(keyStorageService, cryptoRequests);
-        this.cryptoService = new CrytoService(fileStorageService, userKeysUtils);
+        this.keysManagement = new KeysManagement(keyStorageService, UMKutils);
+        this.cryptoService = new CrytoService(keysManagement, fileStorageService, userKeysUtils);
         this.authService = new AuthService(authRequests);
         this.spaceService = new SpaceService(client);
-        this.onboardingManager = new OnboardingManager(storageConfig, cryptoService, userKeysUtils, authService);
-        
-        
+        this.onboardingManager = new OnboardingManager(keysManagement,storageConfig, cryptoService, userKeysUtils, authService);
+
         // UPLOAD PIPELINE
-        this.encryptQueue = new LinkedBlockingQueue<>();
-        this.pendingUploadsQueue = new LinkedBlockingQueue<>();
-        this.uploadQueue = new LinkedBlockingQueue<>();
+        this.encryptQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_UBQ);
+        this.pendingUploadsQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_UBQ);
+        this.uploadQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_UBQ);
         // this.wsClient = new WsClient(uploadQueue, pendingUploadsQueue, fileIndexManager,fileMetadataService);
         this.fileWatcher = new FileWatcher(eventsSuppressor, storageConfig, encryptQueue);
 
         // DOWNLOAD PIPELINE
-        this.downloadQueue = new LinkedBlockingQueue<>();
-        this.decryptQueue = new LinkedBlockingQueue<>();
-        this.installQueue = new LinkedBlockingQueue<>();
+        this.downloadQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_DBQ);
+        this.decryptQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_DBQ);
+        this.installQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_DBQ);
         this.downloader = new Downloader(fileStorageService,  downloadQueue, decryptQueue, cryptoService);
         this.decryptor = new Decryptor(eventsSuppressor, decryptQueue, installQueue, storageConfig, fileStorageService);
         this.installer = new Installer(installQueue);
         this.downloadPipelineManager = new DownloadPipelineManager(downloader, decryptor, installer);
         this.wsClient = new WsClient(installQueue, storageConfig, eventsSuppressor,downloadQueue, fileStorageService, uploadQueue, pendingUploadsQueue, fileIndexManager, fileMetadataService);
-        this.fileEncryptor = new FileEncryptor(storageConfig,wsClient, fileIndexManager, fileMetadataService,cryptoService, pendingUploadsQueue, encryptQueue, uploadQueue);
+        this.fileEncryptor = new FileEncryptor(scheduler,storageConfig,wsClient, fileIndexManager, fileMetadataService,cryptoService, pendingUploadsQueue, encryptQueue, uploadQueue);
         this.fileUploader = new FileUploader(uploadQueue, wsClient);
         this.uploadPipelineManager = new UploadPipelineManager(fileWatcher, fileEncryptor, fileUploader);
-
-
     }
 
     public StorageConfig getStorageConfig() {

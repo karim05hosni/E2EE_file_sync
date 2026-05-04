@@ -20,6 +20,7 @@ D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimho
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\entities\KeyMetadata.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\entities\WrappedPrivK.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\errorsHandling\CryptoOperationException.java
+D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\KeysManagement.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\contracts\ICryptoService.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\CrytoService.java
 D:\Projects\distributed_file_sync\client-app\clientapp\src\main\java\com\karimhosny\crypto\services\impl\UMKutils.java

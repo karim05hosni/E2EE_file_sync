@@ -68,7 +68,7 @@ public class WsClient implements WebSocket.Listener {
     public void onOpen(WebSocket webSocket) {
         System.out.println("Connected!");
         // this.webSocket = webSocket;
-        webSocket.request(1); // 🔑 start receiving messages
+        webSocket.request(1); //  start receiving messages
     }
 
     @Override
@@ -106,7 +106,6 @@ public class WsClient implements WebSocket.Listener {
                 uploadQueue.add(new UploadFileJob(pending.getCipherFile(), pending.getmetadata()));
                 System.out.println("added to upload queue from wsClient");
             }
-            // DOWNLOAD_REQUIRED|
             if (data.toString().startsWith("DOWNLOAD_REQUIRED|")) {
                 System.out.println("download event");
                 String json = data.subSequence(18, data.length()).toString();

@@ -37,6 +37,7 @@ com\karimhosny\file\uploadPipeline\jobs\UploadFileJob.class
 com\karimhosny\connection\websockets\WsClient.class
 com\karimhosny\file\IndexManager$1.class
 com\karimhosny\space\services\impl\SpaceService$2.class
+com\karimhosny\crypto\KeysManagement.class
 com\karimhosny\space\dto\SpaceResponse.class
 com\karimhosny\auth\services\contracts\IAuthService.class
 com\karimhosny\file\downloadPipeline\decryptor\Decryptor.class

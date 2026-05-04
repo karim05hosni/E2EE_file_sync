@@ -22,13 +22,13 @@ public class AuthService implements IAuthService {
             AuthResponse responseData = response.getData().get(0);
 
             if (!response.isSuccess() && response.getData().isEmpty()) {
-                System.out.println("❌ Login failed: " + response.getMessage());
+                System.out.println(" Login failed: " + response.getMessage());
                 return null ;
             }
             // load User Entity
             User user = new User(responseData.getId(), responseData.getName(), "email", responseData.getSpaceId(), responseData.getToken());
             UserSession.getInstance().setCurrentUser(user);
-            System.out.println("✅ Login success, hello: " + UserSession.getInstance().getCurrentUser().getName());
+            System.out.println(" Login success, hello: " + UserSession.getInstance().getCurrentUser().getName());
             return user;
         } catch (IOException ex) {
             System.getLogger(AuthService.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);

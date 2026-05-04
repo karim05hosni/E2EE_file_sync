@@ -1,0 +1,18 @@
+{
+  "fileId" : 164,
+  "checksum" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "version" : 0,
+  "iv" : "AGe9upcB7vhvasUo",
+  "encryptedDEK" : {
+    "1" : "PEZpvplsSvaCEs0E37dH2+MIH6EoFyvnpKzWzCLK2NIfgm3Kaxm6a2+ZTY/nd5/7SPhfJU7YWkDsm+GzUEwFT8NNh7eCFtdR/8ojAl3CcZqumtmn2Xd5rSL7eArvPfpzJe4Q6nmzMY1Z66Bjs/BrypX0tvAmEaG7MwyRrEUrWzW/25eCJdP+YlDSHvT/IzJvBJI3hZVuTSD1M8fve2sUW/JQLf6Vc4zrg4NBrPSNeZDLre5/85MwR+7X2/3HTXvafUxxrTNZwF8L3Bwdh08ov7uRkq+qHQF0UmnJbViGAYVWv8GJg+PgbkaFBOqQiPlie1M4jq13uKPJLYv88F8HSA==",
+    "5" : "SExJtnht/T3PBGr2GUEcaX9KIM6g93zUu6e1JwyzqIYhUvyrKH3f26chZ1NeHJcaI20A2N6uvA93YaVSZQVok8fQ+PzAnnMQmWznkhNyj0hKG0u2utE756t9HPEeX6b/4DqQBGk4kq8tMRUmFsn7Ipic3x1zVi4Z4zjhvcp6uamHIIs+G78bs/e/9Ymx6il1JvspxF4K0C61j3UL7+HIVjQlfB/gfdNcWcAaZ4nDnhZ8w9bvy5QVZjTd2u5LVMkZ7BbwKPNi14xLJuE0oLGOqQ6fPVeKWqvTkZSrrLtWv/fd7hwz74ZJGRX4B5hXQa8c/SodKy0Wuoc8zsUx1H1Snw=="
+  },
+  "size" : 0,
+  "timestamp" : 1777898492890,
+  "ext" : "txt",
+  "by" : 1,
+  "owner" : 1,
+  "spaceId" : 5,
+  "localPath" : "D:\\Projects\\distributed_file_sync\\client-app\\clientapp\\clients\\3\\workspace\\New Text Document.txt",
+  "action" : "DOWNLOAD"
+}

@@ -10,8 +10,6 @@ import java.nio.file.WatchService;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.karimhosny.file.EventsSuppressor;
@@ -24,7 +22,7 @@ public class FileWatcher implements Runnable {
     private EventsSuppressor eventsSuppressor;
     private WatchService watchService;
     private Path workspace;
-    private ExecutorService executorService;
+    // private ExecutorService executorService;
     private Map<WatchEvent.Kind<?>, EncryptJob.Type> eventMap;
     private BlockingQueue<EncryptJob> encryptQueue;
 
@@ -40,7 +38,7 @@ public class FileWatcher implements Runnable {
                 StandardWatchEventKinds.ENTRY_MODIFY,
                 StandardWatchEventKinds.ENTRY_DELETE
         );
-        this.executorService = Executors.newFixedThreadPool(2);
+        // this.executorService = Executors.newFixedThreadPool(2);
         eventMap = new HashMap();
         eventMap.put(StandardWatchEventKinds.ENTRY_CREATE, EncryptJob.Type.CREATE);
         eventMap.put(StandardWatchEventKinds.ENTRY_MODIFY, EncryptJob.Type.MODIFY);
@@ -57,7 +55,7 @@ public class FileWatcher implements Runnable {
         System.out.println("File watcher started");
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                WatchKey key = watchService.poll(550, TimeUnit.MILLISECONDS);
+                WatchKey key = watchService.poll(300, TimeUnit.MILLISECONDS);
                 if (key != null) {
                     iterateEvents(key, encryptQueue);
                 }
@@ -66,7 +64,6 @@ public class FileWatcher implements Runnable {
                 System.err.println("File watcher interrupted: " + e.getMessage());
             }
         }
-
     }
 
     private void iterateEvents(WatchKey key, BlockingQueue<EncryptJob> encryptQueue) {

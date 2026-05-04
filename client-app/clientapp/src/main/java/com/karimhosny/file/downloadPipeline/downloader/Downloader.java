@@ -30,19 +30,19 @@ public class Downloader implements Runnable {
     public void run() {
         System.out.println("From FileDownloader");
         while (!Thread.currentThread().isInterrupted()) {
-            for (DownloadJob downloadJob : downloadQueue) {
+            // for (DownloadJob downloadJob : downloadQueue) {
                 try {
-                    
+                    DownloadJob downloadJob = downloadQueue.take();
                     System.out.println("new job in Downloader");
                     // consume from downloadQueue
-                    FileMetadata metadata = downloadQueue.take().execute();
+                    FileMetadata metadata = downloadJob.execute();
                     InputStream encryptedFile = fileStorageService.openDownloadTmpFile(metadata.getFileId());
                     // produce in decryptQueue
                     decryptQueue.add(new DecryptJob(metadata, encryptedFile, cryptoService));
                 } catch (InterruptedException | IOException ex) {
                     System.getLogger(Downloader.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                 }
-            }
+            // }
         }
     }
 

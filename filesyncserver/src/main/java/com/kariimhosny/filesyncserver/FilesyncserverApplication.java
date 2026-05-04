@@ -10,7 +10,6 @@ public class FilesyncserverApplication {
 	
 	public static void main(String[] args) {
 		SpringApplication.run(FilesyncserverApplication.class, args);
-
 	}
 
 }

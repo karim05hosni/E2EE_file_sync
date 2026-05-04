@@ -3,6 +3,11 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+apache-maven-3.9.15
+apache-maven-3.9.15-bin.zip
+monitored_directory
+
+
 
 ### STS ###
 .apt_generated
@@ -39,6 +44,5 @@ client-app\clientapp\target
 filesyncserver\target
 karim-cert.cer
 keystore.p12
-client-app/clientapp/storage
-client-app\clientapp\clients\1\**
-client-app\clientapp\clients\2\**
+client-app/clientapp/config*
+client-app\clientapp\clients\**

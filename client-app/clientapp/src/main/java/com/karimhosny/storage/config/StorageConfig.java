@@ -37,19 +37,14 @@ public class StorageConfig {
         
         String baseDir;
         if (!Files.exists(this.configPath)) {
-            System.out.println("config file has not been found, creating new one...");
-            Files.createFile(this.configPath);
+            // System.out.println("config file has not been found, creating new one...");
+            // Files.createFile(this.configPath);
             System.out.println("new config file created successfuly");
-            System.out.print("Login: Email");
-            String email = scanner.nextLine();
-            System.out.print("Login: Password");
-            String password = scanner.nextLine();
+
             System.out.println("baseDirectory key has not been found, creating new one...");
             System.out.print("Enter base directory path: ");
             baseDir = scanner.nextLine();
-            String json = "{ \"baseDirectory\": \"" + baseDir + "\", \n";
-            json += "\"email\":\"" + email + "\", \n";
-            json += "\"password\": \""+ password +"\"}";
+            String json = "{ \"baseDirectory\": \"" + baseDir + "\"}";
             Files.writeString(this.configPath, json, StandardCharsets.UTF_8);
         }
         ObjectMapper mapper = new ObjectMapper();
@@ -57,7 +52,7 @@ public class StorageConfig {
         baseDir = config.get("baseDirectory");
 
         if (baseDir == null) {
-
+            
         }
 
         // read baseDir
@@ -122,9 +117,9 @@ public class StorageConfig {
         return filesMetadata;
     }
 
-    public Path getConfigPath() {
-        return configPath;
-    }
+    // public Path getConfigPath() {
+    //     return configPath;
+    // }
 
     public Path getDownloadsTmpPath() {
         return downloadsTmpPath;

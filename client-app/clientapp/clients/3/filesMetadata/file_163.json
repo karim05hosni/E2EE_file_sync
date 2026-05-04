@@ -1,0 +1,18 @@
+{
+  "fileId" : 163,
+  "checksum" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "version" : 0,
+  "iv" : "7l4HzDGl+Q4W1uTz",
+  "encryptedDEK" : {
+    "1" : "nBBwg0tShiVZc++hxdqdo8ZF6EOVjSSBoRxordk9zcLikoRilC/pWmHQHVhdn0Q0p9ciWQEs/Pm2WbDuuy70zXIMuSuVuZR/zSAQd6GHVanjXXzNnGL+/JNUdgHVd6lCly75d039peBYmuJ+OTFcrme0wrjyqYuw8hunz8AJGJWcUb3ITEr+8pnso3XaLDwyy6RKN1pzZVxkx516RpdJQ4GmuewqQpzSFk/xA66Z4godpKZNOqpbGkbbQzUy7MLV0jJiGpyiG5RFEWfKx1gJjUg6cpxSJPx3fUjpVccetQKTG6aKo6TP6qFo/gHYwaXcJfFJMMQk6WD8otPK0B3SwQ==",
+    "5" : "NI/015mcS9rVGNUJi/Q5q/toN5Xx1kOkE2GfPY3P/Dh9IjBbCIsPBiiqr+NauPP9CoaHO7R6kbgYTKpebOz9joVBZZnmJOakpBJ7NyK2DtaATfkcinrnARAXB6KYUorbCYBUTOh8h9AYJcTKJSAlMibLT7lOhcq+e98PEJHTB8YtZcMD04vAXjr5tCjmme/AaSZm6j6UPqh9DLJlUNe72At2E2VaxegHBNVJTZlmFNmcdldvY/dxWFJJ1TEcBJah+E3v3w3O45nliF8QK7XBy3ibsJqcMyP3+nX6p+i0rOyCQKss0MkriYIU4bp5a02v3QZzaouwOR76019eyZMTzw=="
+  },
+  "size" : 0,
+  "timestamp" : 1777898469636,
+  "ext" : "txt",
+  "by" : 1,
+  "owner" : 1,
+  "spaceId" : 5,
+  "localPath" : "D:\\Projects\\distributed_file_sync\\client-app\\clientapp\\clients\\3\\workspace\\dco.txt",
+  "action" : "DOWNLOAD"
+}

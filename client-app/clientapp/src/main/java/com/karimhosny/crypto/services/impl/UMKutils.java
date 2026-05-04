@@ -25,7 +25,7 @@ public class UMKutils {
 
     private static final SecureRandom RNG = new SecureRandom();
     private static IKeyStorageService keystorage;
-    // Argon2 params (tune if you need stronger or faster)
+    // Argon2 params
     private static final int ARGON2_ITERATIONS = 3;       // time cost
     private static final int ARGON2_MEMORY_KB = 65536;   // 64 MB
     private static final int ARGON2_PARALLELISM = 1;

@@ -36,9 +36,8 @@ public class EventsHandler extends TextWebSocketHandler {
         System.out.println("thread from Events Handler: " + Thread.currentThread().getName());
         String clientId = session.getAttributes().get("id").toString();
         String spaceId = session.getAttributes().get("spaceId").toString();
-        System.out.println("New client connected: " + clientId);
+        System.out.println("New client connected: " + clientId + "With spaceId: "+ spaceId);
         wsSessionManager.addSession(clientId, session);
-        System.out.println("spaceId in session attr. : " + spaceId);
         spaceSessionManager.addClient(spaceId, new ClientSession(clientId, session));
         wsSessionManager.getSession(clientId).sendMessage(new TextMessage("Welcome"));;
 
@@ -94,7 +93,7 @@ public class EventsHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, org.springframework.web.socket.CloseStatus status) {
         System.out.println("Client disconnected: " + session.getId());
         String clientId = session.getAttributes().get("id").toString();
-        wsSessionManager.removeSession(session);
         spaceSessionManager.removeClient(session.getAttributes().get("spaceId").toString(), clientId);
+        wsSessionManager.removeSession(session);
     }
 }

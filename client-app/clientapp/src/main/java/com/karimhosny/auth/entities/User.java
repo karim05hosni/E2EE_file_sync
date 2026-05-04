@@ -1,5 +1,7 @@
 package com.karimhosny.auth.entities;
 
+import java.security.PrivateKey;
+
 public class User {
     private Long id;
 
@@ -8,6 +10,10 @@ public class User {
     private String email;
 
     private String jwtToken;
+
+    public byte[] UMK;
+
+    public PrivateKey privKey;
     
     // private String password;  // This will store the hashed password
     

@@ -27,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.util.encoders.Hex;
 
 import com.karimhosny.auth.api.UserSession;
+import com.karimhosny.crypto.KeysManagement;
 import com.karimhosny.crypto.dto.EncryptedFileResult;
 import com.karimhosny.crypto.dto.FileMetadata;
 import com.karimhosny.crypto.services.contracts.ICryptoService;
@@ -36,10 +37,12 @@ public class CrytoService implements ICryptoService {
 
     private final IFileStorageService fileStorageService;
     private final UserKeysUtils userKeysUtils;
+    private KeysManagement keysManagement;
 
-    public CrytoService(IFileStorageService fileStorageService, UserKeysUtils userKeysUtils) {
+    public CrytoService(KeysManagement keysManagement, IFileStorageService fileStorageService, UserKeysUtils userKeysUtils) {
         this.fileStorageService = fileStorageService;
         this.userKeysUtils = userKeysUtils;
+        this.keysManagement = keysManagement;
     }
 
     private SecretKey generateDEK() throws NoSuchAlgorithmException {
@@ -143,7 +146,7 @@ public class CrytoService implements ICryptoService {
     @Override
     public InputStream decryptFile(InputStream encryptedFile, byte[] encryptDEK, byte[] Iv) throws Exception {
             // fetch user's private key
-            PrivateKey privateKey = userKeysUtils.loadPrivK();
+            PrivateKey privateKey = keysManagement.getPrivateKey();
             // decrypt dek
             byte[] dekBytes = decryptDEK(encryptDEK, privateKey);
             SecretKey dek = new SecretKeySpec(dekBytes, 0, dekBytes.length, "AES");

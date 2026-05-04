@@ -21,9 +21,11 @@ public class UploadPipelineManager {
     
     public void start(){
         System.out.println("Hello from uploadPipeline manager");
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        ExecutorService executor = Executors.newFixedThreadPool(5);
         executor.submit(fileWatcher);
         executor.submit(fileEncryptor);
+        executor.submit(fileEncryptor);
+        executor.submit(fileUploader);
         executor.submit(fileUploader);
     }
 

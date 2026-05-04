@@ -27,16 +27,17 @@ public class Decryptor implements Runnable {
     @Override
     public void run(){
         while (!Thread.currentThread().isInterrupted()) {
-            for (DecryptJob decryptJob : decryptQueue) {
+            // for (DecryptJob decryptJob : decryptQueue) {
                 try {
-                    EncryptedFileResult file = decryptQueue.take().execute();
+                    DecryptJob decryptJob = decryptQueue.take();
+                    EncryptedFileResult file = decryptJob.execute();
                     InstallJob installJob = new InstallJob(eventsSuppressor, storageConfig, file.getMetadata(), file.getEncryptedFileStream(), fileStorageService);
-                    InstallQueue.add(installJob);
+                    InstallQueue.put(installJob);
                 } catch (InterruptedException ex) {
                     System.getLogger(Decryptor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                 }
 
-            }
+            // }
         }
     }
 }

@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -37,12 +36,12 @@ public class FileEncryptor implements Runnable {
     private IndexManager fileIndexManager;
     private StorageConfig storageConfig;
     // Global scheduler (created once)
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+    private ScheduledExecutorService scheduler;
 
-// Track scheduled tasks per file path
+    // Track scheduled tasks per file path
     private final Map<Path, ScheduledFuture<?>> debounceMap = new ConcurrentHashMap<>();
 
-    public FileEncryptor(StorageConfig storageConfig, WsClient wsClient, IndexManager fileIndexManager, FileMetadataService fileMetadataService, ICryptoService cryptoService, BlockingQueue<pendingUpload> pendingUploadsQueue, BlockingQueue<EncryptJob> encryptQueue, BlockingQueue<UploadJob> uploadQueue) {
+    public FileEncryptor(ScheduledExecutorService scheduler,StorageConfig storageConfig, WsClient wsClient, IndexManager fileIndexManager, FileMetadataService fileMetadataService, ICryptoService cryptoService, BlockingQueue<pendingUpload> pendingUploadsQueue, BlockingQueue<EncryptJob> encryptQueue, BlockingQueue<UploadJob> uploadQueue) {
         this.cryptoService = cryptoService;
         this.encryptQueue = encryptQueue;
         this.pendingUploadsQueue = pendingUploadsQueue;
@@ -51,11 +50,90 @@ public class FileEncryptor implements Runnable {
         this.wsClient = wsClient;
         this.storageConfig = storageConfig;
         this.fileIndexManager = fileIndexManager;
+        this.scheduler = scheduler;
     }
 
     public void run() {
         System.out.println("From FileEncryptor");
         while (!Thread.currentThread().isInterrupted()) {
+            try {
+                EncryptJob job = encryptQueue.take();
+                 System.out.println("Path: " + job.getPath() + " event: " + job.getType());
+                User user = UserSession.getInstance().getCurrentUser();
+                // encrypt file
+                if (job.getType() == EncryptJob.Type.CREATE) {
+                    EncryptedFileResult res = cryptoService.encryptFile(job.getPath());
+                    res.getMetadata().setVersion(0);
+                    res.getMetadata().setOwner(user.getId());
+                    res.getMetadata().setSpaceId(user.getSpaceId());
+                    res.getMetadata().setAction("UPLOAD");
+                    // load UploadMetadataJob
+                    UploadMetadataJob uploadMetadataJob = new UploadMetadataJob(res.getMetadata());
+                    UploadFileJob uploadFileJob = new UploadFileJob(res.getEncryptedFileStream(), res.getMetadata());
+                    // put it in upload queue
+                    uploadQueue.add(uploadMetadataJob);
+                    uploadQueue.add(uploadFileJob);
+                }
+                if (job.getType() == EncryptJob.Type.MODIFY) {
+                    System.out.println("Modify Event");
+                    // cancel old debounce task if exists
+                    ScheduledFuture<?> oldFuture = debounceMap.get(job.getPath());
+                    if (oldFuture != null && !oldFuture.isDone()) {
+                        oldFuture.cancel(false);
+                    }
+
+                    // schedule new debounce task
+                    Runnable task = () -> {
+                        try {
+                            EncryptedFileResult res = cryptoService.encryptFile(job.getPath());
+
+                            // get fileId from indexManager
+                            Integer fileId = fileIndexManager.getFileId(job.getPath().toString());
+                            // lookup file metadata by fileId
+                            Path metadataPath = storageConfig.getFilesMetadata().resolve("file_" + fileId + ".json");
+                            // load metadata
+                            FileMetadata metadata = fileMetadataService.load(metadataPath);
+
+                            metadata.setVersion(metadata.getVersion() + 1);
+                            metadata.setChecksum(res.getMetadata().getChecksum());
+                            metadata.setIv(res.getMetadata().getIv());
+                            // res.getMetadata().setVersion(metadata.getVersion() + 1);
+                            metadata.setEncryptedDEKs(res.getMetadata().getEncryptedDEK());
+
+                            fileMetadataService.save(metadata);
+                            ObjectMapper mapper = new ObjectMapper();
+                            wsClient.send("MODIFY|" + mapper.writeValueAsString(metadata));
+                            // put to pendingUploadQueue
+                            pendingUploadsQueue.add(new pendingUpload(metadata, res.getEncryptedFileStream()));
+                            debounceMap.remove(job.getPath()); // cleanup
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    };
+                    ScheduledFuture<?> newFuture = scheduler.schedule(task, 700, TimeUnit.MILLISECONDS);
+                    debounceMap.put(job.getPath(), newFuture);
+                }
+                if (job.getType() == EncryptJob.Type.DELETE) {
+                    try {
+                        Integer fileId = fileIndexManager.getFileId(job.getPath().toString());
+                        // lookup file metadata by fileId
+                        Path metadataPath = storageConfig.getFilesMetadata().resolve("file_" + fileId + ".json");
+                        // load metadata
+                        FileMetadata metadata = fileMetadataService.load(metadataPath);
+                        
+                        metadata.setAction("DELETE");
+                        ObjectMapper mapper = new ObjectMapper();
+                        wsClient.send("DELETE|"+mapper.writeValueAsString(metadata));
+                    } catch (JsonProcessingException ex) {
+                        System.getLogger(FileEncryptor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                System.getLogger(FileEncryptor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+            
+            
+            /*
             for (EncryptJob elem : encryptQueue) {
                 System.out.println("Path: " + elem.getPath() + " event: " + elem.getType());
                 // encrypt file
@@ -109,9 +187,10 @@ public class FileEncryptor implements Runnable {
                             ex.printStackTrace();
                         }
                     };
-                    ScheduledFuture<?> newFuture = scheduler.schedule(task, 700, TimeUnit.MILLISECONDS);
+                    ScheduledFuture<?> newFuture = scheduler.schedule(task, 500, TimeUnit.MILLISECONDS);
                     debounceMap.put(elem.getPath(), newFuture);
                 }
+                
                 if (elem.getType() == EncryptJob.Type.DELETE) {
                     try {
                         Integer fileId = fileIndexManager.getFileId(elem.getPath().toString());
@@ -128,7 +207,7 @@ public class FileEncryptor implements Runnable {
                     }
                 }
                 encryptQueue.remove();
-            }
+            }*/
         }
 
     }
