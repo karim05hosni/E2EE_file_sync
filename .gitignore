@@ -45,4 +45,4 @@ filesyncserver\target
 karim-cert.cer
 keystore.p12
 client-app/clientapp/config*
-client-app\clientapp\clients\**
+client-app/clientapp/clients/**
