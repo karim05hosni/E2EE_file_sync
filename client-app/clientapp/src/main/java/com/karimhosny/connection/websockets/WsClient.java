@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -35,8 +36,10 @@ public class WsClient implements WebSocket.Listener {
     private EventsSuppressor eventsSuppressor;
     private StorageConfig storageConfig;
     private BlockingQueue<InstallJob> installQueue;
+    private Map<Integer, pendingUpload> pendingUploadsMap;
 
-    public WsClient(BlockingQueue<InstallJob> installQueue, StorageConfig storageConfig, EventsSuppressor eventsSuppressor, BlockingQueue<DownloadJob> downloadQueue, IFileStorageService fileStorageService, BlockingQueue<UploadJob> uploadQueue, BlockingQueue<pendingUpload> pendingUploadsQueue, IndexManager fileIndexManager, FileMetadataService fileMetadataService) {
+    public WsClient( Map<Integer, pendingUpload> pendingUploadsMap, BlockingQueue<InstallJob> installQueue, StorageConfig storageConfig, EventsSuppressor eventsSuppressor, BlockingQueue<DownloadJob> downloadQueue, IFileStorageService fileStorageService, BlockingQueue<UploadJob> uploadQueue, BlockingQueue<pendingUpload> pendingUploadsQueue, IndexManager fileIndexManager, FileMetadataService fileMetadataService) {
+        this.pendingUploadsMap = pendingUploadsMap;
         this.pendingUploadsQueue = pendingUploadsQueue;
         this.fileMetadataService = fileMetadataService;
         this.fileIndexManager = fileIndexManager;
@@ -101,10 +104,17 @@ public class WsClient implements WebSocket.Listener {
             }
             if (data.toString().startsWith("UPLOAD_REQUIRED")) {
                 // take from pending uploads
-                pendingUpload pending = pendingUploadsQueue.take();
+                // pendingUpload pending = pendingUploadsQueue.take();
+                System.out.println("Upload required event received from server: " + data.toString());
+                String jsonMessage = data.toString().replaceFirst("^UPLOAD_REQUIRED\\|", "");
+                // parse the message to file metadata dto
+                ObjectMapper objectMapper = new ObjectMapper();
+                FileMetadata dto = objectMapper.readValue(jsonMessage, FileMetadata.class);
+                pendingUpload pending = pendingUploadsMap.get(dto.getFileId());
                 // make new upload job
+                System.out.println("Added to upload queue from wsClient for file: " + dto.getLocalPath());
                 uploadQueue.add(new UploadFileJob(pending.getCipherFile(), pending.getmetadata()));
-                System.out.println("added to upload queue from wsClient");
+                // System.out.println("added to upload queue from wsClient");
             }
             if (data.toString().startsWith("DOWNLOAD_REQUIRED|")) {
                 System.out.println("download event");

@@ -24,6 +24,7 @@ public class UploadFileJob implements UploadJob {
             fileRequests = new FileRequest();
             String token = UserSession.getInstance().getCurrentUser().getJwtToken();
             fileRequests.upload(cipherFile, metadata, token);
+            cipherFile.close();
         } catch (IOException ex) {
             System.getLogger(UploadFileJob.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }

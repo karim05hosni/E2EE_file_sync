@@ -1,0 +1,20 @@
+.git/
+.gitignore
+.vscode/
+.idea/
+*.iml
+
+# Maven / build output
+/target/
+
+# Local env / secrets
+.env
+secrets/
+**/*.key
+
+# Local DB init scripts (mounted, not baked into image)
+init.sql/
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -1,0 +1,46 @@
+sequenceDiagram 
+    participant Srv as Server
+    participant WS as WebSocketClient
+    participant IM as IndexManager
+    participant DQ as downloadQueue
+    participant DL as Downloader
+    participant HTTP as HttpClient
+    participant FS as FileStorage
+    participant DecQ as decryptQueue
+    participant Dec as Decryptor
+    participant CS as CryptoService
+    participant IQ as installQueue
+    participant ES as EventsSuppressor (Map)
+    participant Inst as Installer
+
+    Srv->>WS: WebSocket event [DOWNLOAD_REQUIRED|metadata]
+    WS->>IM: addFile(workspacePath, fileId)
+    WS->>DQ: put DownloadJob(metadata)
+    
+    DL->>DQ: take()
+    DL->>HTTP: GET /api/file/download/{fileId}
+    HTTP-->>DL: HTTP Response (InputStream of encrypted bytes)
+    
+    DL->>FS: saveDownloadTmpFile(InputStream, fileId)
+    Note over DL, FS: Read HTTP InputStream chunk by chunk & write to tmp/*.bin
+    FS->>FS: auto-close HTTP InputStream
+    
+    DL->>FS: openDownloadTmpFile(fileId)
+    FS-->>DL: return FileInputStream (encrypted data)
+    
+    DL->>DecQ: put DecryptJob(metadata, FileInputStream)
+    
+    Dec->>DecQ: take()
+    Dec->>CS: decryptFile(FileInputStream, encryptedDEK, IV)
+    Note over CS: RSA decrypt DEK, init AES-GCM Cipher
+    CS-->>Dec: return CipherInputStream (plaintext data stream)
+    
+    Dec->>IQ: put InstallJob(metadata, CipherInputStream)
+    
+    Inst->>IQ: take()
+    Inst->>ES: suppress(workspacePath)
+    Note over Inst, ES: Adds path to suppressedEvents map (prevents upload loop)
+    
+    Inst->>FS: saveFile(CipherInputStream, workspacePath)
+    Note over Inst, FS: Read chunk by chunk & write to final workspace OutputStream
+    FS->>FS: auto-close BOTH InputStream and OutputStream

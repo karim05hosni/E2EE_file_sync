@@ -1,0 +1,43 @@
+sequenceDiagram 
+    participant OS as OS/FileSystem
+    participant FW as FileWatcher
+    participant EQ as encryptQueue
+    participant FE as FileEncryptor
+    participant DebMap as debounceMap
+    participant CS as CryptoService
+    participant PUQ as pendingUploadsQueue
+    participant WS as WebSocketClient
+    participant UQ as uploadQueue
+    participant FU as FileUploader
+    participant Srv as Server
+
+    OS->>FW: emit ENTRY_MODIFY (file path)
+    FW->>EQ: put EncryptJob(path, MODIFY)
+    FE->>EQ: take()
+    EQ-->>FE: return EncryptJob
+    
+    FE->>DebMap: check & cancel old ScheduledFuture for path
+    FE->>DebMap: put new ScheduledFuture (700ms delay)
+    Note over FE, DebMap: Wait 700ms (Debounce constraint)
+    
+    FE->>CS: encryptFile(path)
+    CS-->>FE: return EncryptedFileResult (CipherInputStream, Metadata)
+    
+    FE->>WS: send("MODIFY|{metadata}")
+    WS->>Srv: WebSocket message [MODIFY metadata]
+    
+    FE->>PUQ: add(pendingUpload(metadata, cipherStream))
+    
+    Srv->>WS: WebSocket event [UPLOAD_REQUIRED]
+    WS->>PUQ: take()
+    PUQ-->>WS: return pendingUpload
+    
+    WS->>UQ: add(UploadFileJob(cipherStream, metadata))
+    
+    FU->>UQ: take()
+    UQ-->>FU: return UploadFileJob
+    
+    FU->>Srv: HTTP POST /api/file/upload (Multipart)
+    Note over FU, Srv: Streams cipherStream chunk by chunk
+    FU->>OS: close() cipherStream
+    Srv-->>FU: HTTP 200 OK

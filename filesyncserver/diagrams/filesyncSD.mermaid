@@ -1,0 +1,60 @@
+sequenceDiagram 
+    participant Client as Client-side
+    participant EH as EventsHandler
+    participant WSM as WebSocketSessionManager
+    participant SSM as SpaceSessionManager
+    participant CS as ClientSession
+    participant FS as fileService
+    participant FC as FileController
+    participant DB as Database
+    participant Disk as FileSystem
+
+    Note over SSM: Shared State: workspaceSessions<br/>Map<String(spaceId), Map<String(clientId), ClientSession>>
+    Note over WSM: Shared State: sessions<br/>Map<String(userId), WebSocketSession>
+
+    Client->>EH: Send WS Text: "MODIFY|{FileMetadataDTO_JSON}"
+    Note over EH: Parse JSON and extract fileId & checksum
+    
+    EH->>DB: findLastVersionByFileId(dto.fileId)
+    DB-->>EH: Return server's latest FileVersion
+
+    alt Checksum differs AND Client Version > Server Version
+        EH->>Client: Send WS Text: "UPLOAD_REQUIRED|{dtoJson}"
+        
+        Client->>FC: POST /api/file/upload (Multipart HTTP: file + metadata)
+        FC->>FS: receiveFile(MultipartFile, FileMetadataDTO)
+        
+        FS->>DB: saveFileMetadataAndVersion() (inserts Metadata, Version, DEKs)
+        DB-->>FS: Acknowledge DB insertions completed
+        
+        FS->>Disk: saveFile(file.getBytes(), fileId, version, spaceId)
+        Note over Disk: Write raw bytes to /server_storage/.../v[X].bin
+        Disk-->>FS: Acknowledge disk write
+        
+        FS->>WSM: getSession(uploaderId)
+        WSM-->>FS: returns WebSocketSession
+        FS->>Client: Send WS Text: "META|{confirmedDtoJson}"
+        
+        FS->>SSM: broadcastExcept(spaceId, uploaderId, "DOWNLOAD_REQUIRED|...")
+        Note over SSM: Looks up space's ClientSession map
+        loop For each active ClientSession in Space (except uploader)
+            SSM->>CS: sendMessage("DOWNLOAD_REQUIRED|...")
+            CS->>Client: (Other clients receive download notification)
+        end 
+        
+        FS-->>FC: Return Metadata DTO
+        FC-->>Client: HTTP 200 OK
+        
+    else Checksum matches (Already in sync)
+        EH->>Client: Send WS Text: "NOTHING_REQUIRED|{serverFileVersionJson}"
+    end 
+
+    opt Broadcast Event (e.g., DELETE)
+        Client->>EH: Send WS Text: "DELETE|{payload}"
+        EH->>SSM: broadcastExcept(spaceId, clientId, stringMessage)
+        Note over SSM: Looks up space's ClientSession map
+        loop For each active ClientSession in Space (except sender)
+            SSM->>CS: sendMessage(stringMessage)
+            CS->>Client: (Other clients receive WS Update)
+        end 
+    end 

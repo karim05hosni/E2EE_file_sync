@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -61,13 +62,19 @@ public class FileStorage implements IFileStorageService {
             }
         } catch (IOException ex) {
             System.getLogger(FileStorage.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        } finally {
+            try {
+                file.close();
+            } catch (IOException ex) {
+                System.getLogger(FileStorage.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
         }
     }
 
     public void saveDownloadTmpFile(InputStream file, int fileId) throws IOException {
         Path outPath = storageConfig.getDownloadsTmpPath().resolve("file_" + fileId + ".bin");
         System.out.println("downloaded file length BEFORE saving: " + outPath.toFile().length());
-        Files.write(outPath, file.readAllBytes());
+        Files.copy(file, outPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public InputStream openDownloadTmpFile(int fileId) throws IOException {

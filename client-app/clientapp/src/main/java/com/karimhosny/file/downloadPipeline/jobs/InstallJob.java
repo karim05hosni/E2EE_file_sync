@@ -59,5 +59,10 @@ public class InstallJob {
             System.out.println("Suppressed Events in: " + workspace);
             fileStorageService.saveFile(file, workspace);
         }
+        try {
+            file.close();
+        } catch (IOException ex) {
+            System.getLogger(InstallJob.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
     }
 }

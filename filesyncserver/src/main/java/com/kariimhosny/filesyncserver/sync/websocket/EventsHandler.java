@@ -65,7 +65,9 @@ public class EventsHandler extends TextWebSocketHandler {
                 if (!dto.getChecksum().equals(serverFileVersion.getChecksum())) {
                     if (dto.getVersion() > serverFileVersion.getVersionNo()) {
                         // Upload
-                        session.sendMessage(new TextMessage("UPLOAD_REQUIRED"));
+                        String json = objectMapper.writeValueAsString(dto);
+                        session.sendMessage(new TextMessage("UPLOAD_REQUIRED|" + json));
+                        System.out.println("message sent to client: " + session.getId() + " dto: " + json);
                         fileService.receiveMetadata(session.getId(), dto);
                     }
                 } else {

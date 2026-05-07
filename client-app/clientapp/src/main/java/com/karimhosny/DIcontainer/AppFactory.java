@@ -81,6 +81,7 @@ public class AppFactory {
     private final int FIXED_ELEMENTS_IN_UBQ = 100;
     private final int FIXED_ELEMENTS_IN_DBQ = 60;
     private final KeysManagement keysManagement;
+    private final Map<Integer, pendingUpload> pendingUploadsMap;
 
 
     public AppFactory() throws Exception {
@@ -102,7 +103,7 @@ public class AppFactory {
         this.authService = new AuthService(authRequests);
         this.spaceService = new SpaceService(client);
         this.onboardingManager = new OnboardingManager(keysManagement,storageConfig, cryptoService, userKeysUtils, authService);
-
+        this.pendingUploadsMap = new ConcurrentHashMap<>();
         // UPLOAD PIPELINE
         this.encryptQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_UBQ);
         this.pendingUploadsQueue = new LinkedBlockingQueue<>(FIXED_ELEMENTS_IN_UBQ);
@@ -118,8 +119,8 @@ public class AppFactory {
         this.decryptor = new Decryptor(eventsSuppressor, decryptQueue, installQueue, storageConfig, fileStorageService);
         this.installer = new Installer(installQueue);
         this.downloadPipelineManager = new DownloadPipelineManager(downloader, decryptor, installer);
-        this.wsClient = new WsClient(installQueue, storageConfig, eventsSuppressor,downloadQueue, fileStorageService, uploadQueue, pendingUploadsQueue, fileIndexManager, fileMetadataService);
-        this.fileEncryptor = new FileEncryptor(scheduler,storageConfig,wsClient, fileIndexManager, fileMetadataService,cryptoService, pendingUploadsQueue, encryptQueue, uploadQueue);
+        this.wsClient = new WsClient(pendingUploadsMap, installQueue, storageConfig, eventsSuppressor, downloadQueue, fileStorageService, uploadQueue, pendingUploadsQueue, fileIndexManager, fileMetadataService);
+        this.fileEncryptor = new FileEncryptor(pendingUploadsMap, scheduler,storageConfig,wsClient, fileIndexManager, fileMetadataService,cryptoService, pendingUploadsQueue, encryptQueue, uploadQueue);
         this.fileUploader = new FileUploader(uploadQueue, wsClient);
         this.uploadPipelineManager = new UploadPipelineManager(fileWatcher, fileEncryptor, fileUploader);
     }

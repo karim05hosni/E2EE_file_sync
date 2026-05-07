@@ -1,22 +1,33 @@
-# Use a specific Java version for reproducibility
+### Build stage
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
+
+WORKDIR /workspace
+
+# Copy Maven wrapper + pom first for better layer caching
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+
+RUN ./mvnw -DskipTests dependency:go-offline
+
+COPY src/ src/
+
+RUN ./mvnw -DskipTests package \
+	&& JAR_FILE=$(ls -1 target/*.jar | grep -v '\\.original\\.jar$' | head -n 1) \
+	&& test -n "$JAR_FILE" \
+	&& cp "$JAR_FILE" /workspace/app.jar
+
+### Runtime stage
 FROM eclipse-temurin:21-jre-alpine
 
-# Create a non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Set working directory
 WORKDIR /app
 
-# Copy the built JAR file
-COPY target/*.jar app.jar
+COPY --from=builder /workspace/app.jar /app/app.jar
 
-# Expose the application port
 EXPOSE 8080
 
-# Set environment variables with defaults
-ENV SPRING_PROFILES_ACTIVE=production
 ENV SERVER_PORT=8080
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

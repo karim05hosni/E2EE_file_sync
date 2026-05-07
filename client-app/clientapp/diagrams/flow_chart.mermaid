@@ -1,0 +1,51 @@
+flowchart TD
+
+    subgraph Upload Pipeline
+        FW[FileWatcher]
+        EQ[("encryptQueue<br/>(LinkedBlockingQueue)")]
+        FE[FileEncryptor]
+        DebMap[("debounceMap<br/>(ConcurrentHashMap)")]
+        PUQ[("pendingUploadsQueue<br/>(LinkedBlockingQueue)")]
+        UQ[("uploadQueue<br/>(LinkedBlockingQueue)")]
+        FU[FileUploader]
+        WS[WebSocketClient]
+        Srv((Server))
+
+        FW -- "put EncryptJob(path, action)<br/>raw file change event" --> EQ
+        EQ -- "take EncryptJob()" --> FE
+        FE <--> |"check/update ScheduledFuture<br/>coalesces rapid file edits"| DebMap
+        
+        FE -- "put pendingUpload(meta, cipherStream)<br/>holds stream until server approval" --> PUQ
+        FE -- "put UploadMetadataJob / UploadFileJob" --> UQ
+        
+        WS -- "takes pendingUpload upon<br/>UPLOAD_REQUIRED msg" --> PUQ
+        WS -- "transforms pending to UploadFileJob" --> UQ
+        
+        UQ -- "take UploadJob()" --> FU
+        FU -- "streams chunked HTTP POST" --> Srv
+    end
+
+    subgraph Download Pipeline
+        Srv2((Server))
+        WS2[WebSocketClient]
+        DQ[("downloadQueue<br/>(LinkedBlockingQueue)")]
+        DL[Downloader]
+        DecQ[("decryptQueue<br/>(LinkedBlockingQueue)")]
+        Dec[Decryptor]
+        IQ[("installQueue<br/>(LinkedBlockingQueue)")]
+        Inst[Installer]
+        ESMap[("suppressedEvents<br/>(ConcurrentHashMap)")]
+
+        Srv2 -- "[DOWNLOAD_REQUIRED|metadata]" --> WS2
+        WS2 -- "put DownloadJob(metadata)" --> DQ
+        DQ -- "take DownloadJob()" --> DL
+        
+        DL -- "downloads HTTP to tmp,<br/>put DecryptJob(metadata, stream)" --> DecQ
+        DecQ -- "take DecryptJob()" --> Dec
+        
+        Dec -- "decrypts chunk stream,<br/>put InstallJob(metadata, plainStream)" --> IQ
+        IQ -- "take InstallJob()" --> Inst
+        
+        Inst -- "put(path, timestamp)<br/>skips FileWatcher loop" --> ESMap
+        Inst -- "writes plaintext to workspace" --> Workspace[(Workspace FS)]
+    end

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +16,7 @@ public class IndexManager {
     private final StorageConfig storageConfig;
     private final Path indexPath;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Map<String, Integer> fileIndex = new HashMap<>();
+    private final Map<String, Integer> fileIndex = new ConcurrentHashMap<>();
 
     public IndexManager(StorageConfig storageConfig) {
         this.storageConfig = storageConfig;
