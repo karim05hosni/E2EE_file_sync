@@ -46,3 +46,5 @@ karim-cert.cer
 keystore.p12
 client-app/clientapp/config*
 client-app/clientapp/clients/**
+monitored_directory/
+apache-maven-3.9.15/
